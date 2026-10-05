@@ -2,6 +2,7 @@ package com.warehouse.swarm.model;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 public final class Models {
     private Models() {}
@@ -23,4 +24,9 @@ public final class Models {
                         int completedTasks, int obstaclesDetected, int reassignments) {}
 
     public record CreateTaskRequest(String source, String destination, String priority) {}
+
+    public record NavigationEventRequest(String action, String reason, String timestamp,
+                                         Integer priorityObjectId, Double confidence,
+                                         Map<String, Object> object,
+                                         Map<String, Double> clearance) {}
 }

@@ -109,6 +109,74 @@ public class WarehouseService {
         return state();
     }
 
+    public synchronized Models.State processNavigationEvent(String botId, Models.NavigationEventRequest request) {
+        String normalizedBotId = normalizeBotId(botId);
+        BotState bot = bots.get(normalizedBotId);
+        if (bot == null || request == null || request.action() == null) return state();
+
+        String action = request.action().toUpperCase(Locale.ROOT);
+        String reason = request.reason() == null || request.reason().isBlank()
+                ? "Navigation event received" : request.reason();
+        int confidence = request.confidence() == null
+                ? bot.aiConfidence : (int) Math.round(request.confidence() * 100);
+
+        switch (action) {
+            case "CONTINUE" -> {
+                obstacleActive = false;
+                ai = new Models.AiEvent("CLEAR", confidence, 85, "NO", "NONE");
+                bot.aiState = "CLEAR";
+                bot.aiConfidence = confidence;
+                log(normalizedBotId, "PATH_CLEAR", "Vision module reports clear path", "INFO");
+            }
+            case "WAIT" -> {
+                obstacleActive = true;
+                ai = new Models.AiEvent("OBSTACLE WAITING", confidence, 24, "YES", "WAIT");
+                bot.aiState = "OBSTACLE WAITING";
+                bot.aiConfidence = confidence;
+                log(normalizedBotId, "NAVIGATION_WAIT", reason, "WARNING");
+            }
+            case "STOP" -> {
+                obstacleActive = true;
+                ai = new Models.AiEvent("BLOCKED", confidence, 24, "YES", "STOP");
+                bot.aiState = "BLOCKED";
+                bot.aiConfidence = confidence;
+                log(normalizedBotId, "NAVIGATION_STOP", reason, "WARNING");
+            }
+            case "AVOID_LEFT", "AVOID_RIGHT" -> {
+                obstacleActive = true;
+                String direction = action.substring("AVOID_".length());
+                ai = new Models.AiEvent("OBSTACLE AVOIDANCE", confidence, 24, "YES", action);
+                bot.aiState = "OBSTACLE AVOIDANCE";
+                bot.aiConfidence = confidence;
+                log(normalizedBotId, "LOCAL_AVOIDANCE", reason + " — avoiding " + direction.toLowerCase(Locale.ROOT), "WARNING");
+            }
+            case "REPLAN" -> {
+                obstacleActive = true;
+                ai = new Models.AiEvent("ROUTE BLOCKED", confidence, 24, "YES", "REPLAN ROUTE");
+                bot.aiState = "ROUTE BLOCKED";
+                bot.aiConfidence = confidence;
+                tasks.replaceAll(t -> normalizedBotId.equals(t.assignedBot()) && !"COMPLETED".equals(t.status())
+                        ? new Models.Task(t.id(), t.source(), t.destination(), t.priority(), t.assignedBot(), t.status(), "BLOCKED")
+                        : t);
+                log(normalizedBotId, "ROUTE_REPLAN_REQUESTED",
+                        "Static obstacle blocked route — new route requested", "WARNING");
+            }
+            default -> log(normalizedBotId, "NAVIGATION_EVENT", reason, "INFO");
+        }
+        return state();
+    }
+
+    public synchronized Models.State updateBotState(String botId, String status) {
+        String normalizedBotId = normalizeBotId(botId);
+        BotState bot = bots.get(normalizedBotId);
+        if (bot == null || status == null || status.isBlank()) return state();
+
+        bot.status = status;
+        bot.lastSeen = now();
+        log(normalizedBotId, "BOT_STATE_CHANGED", "Bot state changed to " + status, "INFO");
+        return state();
+    }
+
     public synchronized Models.Task createTask(Models.CreateTaskRequest req) {
         String id = "#" + taskCounter.incrementAndGet();
         Optional<BotState> bot = bots.values().stream().filter(b -> "ONLINE".equals(b.status))
@@ -124,6 +192,10 @@ public class WarehouseService {
 
     public synchronized void loginEvent(String username) {
         log("AUTH", "LOGIN_SUCCESS", "Dashboard user authenticated: " + username, "INFO");
+    }
+
+    private String normalizeBotId(String botId) {
+        return botId == null ? null : botId.replace('_', '-');
     }
 
     private int score(BotState b, Models.Task t) {
