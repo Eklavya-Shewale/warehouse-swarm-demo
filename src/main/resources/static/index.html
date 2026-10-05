@@ -1,0 +1,1581 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Warehouse Swarm Command Center</title>
+
+    <style>
+      /* =========================
+           GLOBAL
+        ========================= */
+
+      :root {
+        --bg: #080d18;
+        --panel: #11182b;
+        --panel2: #18223a;
+        --line: #283653;
+
+        --text: #e8eefb;
+        --muted: #8e9bb3;
+
+        --green: #42d392;
+        --yellow: #f6c85f;
+        --red: #ff637d;
+        --blue: #67a5ff;
+        --cyan: #47d7e5;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+
+        color: var(--text);
+
+        background:
+          radial-gradient(circle at top left, #14213b 0%, transparent 35%),
+          linear-gradient(135deg, #080d18, #0e1729);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      /* =========================
+           MAIN APP
+        ========================= */
+
+      .app {
+        width: min(1500px, 94vw);
+
+        margin: 0 auto;
+
+        padding: 18px 0 25px;
+      }
+
+      /* =========================
+           HEADER
+        ========================= */
+
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        margin-bottom: 15px;
+      }
+
+      .title h1 {
+        margin: 0;
+
+        font-size: 27px;
+        font-weight: 800;
+      }
+
+      .title p {
+        margin: 5px 0 0;
+
+        color: var(--muted);
+
+        font-size: 13px;
+      }
+
+      .pill {
+        padding: 8px 13px;
+
+        border: 1px solid #214936;
+        border-radius: 999px;
+
+        color: var(--green);
+        background: #0d1b18;
+
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      /* =========================
+           CONTROL BAR
+        ========================= */
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+
+        padding: 12px 14px;
+
+        margin-bottom: 15px;
+
+        background: rgba(17, 24, 43, 0.96);
+
+        border: 1px solid var(--line);
+        border-radius: 14px;
+      }
+
+      button {
+        padding: 9px 13px;
+
+        color: var(--text);
+
+        background: #1a2944;
+
+        border: 1px solid var(--line);
+        border-radius: 9px;
+
+        cursor: pointer;
+
+        font-size: 12px;
+
+        transition: 0.2s ease;
+      }
+
+      button:hover {
+        background: #223554;
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .danger {
+        color: #ffb6c1;
+
+        background: #301823;
+
+        border-color: #643140;
+      }
+
+      .danger:hover {
+        background: #45202d;
+      }
+
+      .primary {
+        color: white;
+
+        background: linear-gradient(135deg, #1e4f93, #17315e);
+
+        border-color: #3568b7;
+
+        font-weight: 700;
+      }
+
+      .primary:hover {
+        background: linear-gradient(135deg, #2764b2, #1c4078);
+      }
+
+      /* =========================
+           MAIN GRID
+        ========================= */
+
+      .main-grid {
+        display: grid;
+
+        grid-template-columns: 1.65fr 1fr;
+
+        gap: 15px;
+      }
+
+      .panel {
+        background: rgba(17, 24, 43, 0.96);
+
+        border: 1px solid var(--line);
+
+        border-radius: 15px;
+
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+
+        overflow: hidden;
+      }
+
+      .panel h2 {
+        margin: 0;
+
+        padding: 12px 15px;
+
+        border-bottom: 1px solid var(--line);
+
+        font-size: 13px;
+        font-weight: 800;
+
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      /* =========================
+           WAREHOUSE
+        ========================= */
+
+      .warehouse-panel {
+        min-height: 535px;
+      }
+
+      .map-wrap {
+        padding: 14px;
+      }
+
+      .warehouse {
+        position: relative;
+
+        height: 470px;
+
+        overflow: hidden;
+
+        border: 1px solid #263552;
+
+        border-radius: 12px;
+
+        background-color: #0c1424;
+
+        background-image:
+          linear-gradient(#15223a 1px, transparent 1px),
+          linear-gradient(90deg, #15223a 1px, transparent 1px);
+
+        background-size: 40px 40px;
+      }
+
+      /* =========================
+           SHELVES
+        ========================= */
+
+      .shelf {
+        position: absolute;
+
+        width: 110px;
+
+        padding: 8px 6px;
+
+        text-align: center;
+
+        background: #263754;
+
+        border: 1px solid #3a4e76;
+
+        border-radius: 6px;
+
+        color: #b7c4dc;
+
+        font-size: 11px;
+      }
+
+      /* =========================
+           DOCKS
+        ========================= */
+
+      .dock {
+        position: absolute;
+
+        padding: 7px 10px;
+
+        border: 2px dashed var(--cyan);
+
+        border-radius: 8px;
+
+        color: var(--cyan);
+
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      /* =========================
+           OBSTACLE
+        ========================= */
+
+      .obstacle {
+        position: absolute;
+
+        width: 36px;
+        height: 36px;
+
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 8px;
+
+        background: rgba(255, 99, 125, 0.18);
+
+        border: 2px solid var(--red);
+
+        color: var(--red);
+
+        font-size: 19px;
+        font-weight: 800;
+
+        box-shadow: 0 0 20px rgba(255, 99, 125, 0.25);
+
+        transition: 0.5s;
+      }
+
+      /* =========================
+           BOTS
+        ========================= */
+
+      .bot {
+        position: absolute;
+
+        width: 43px;
+        height: 43px;
+
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+
+        border: 2px solid currentColor;
+
+        background: #0d1627;
+
+        font-size: 18px;
+
+        transition:
+          left 0.7s ease,
+          top 0.7s ease,
+          opacity 0.4s ease;
+      }
+
+      .bot small {
+        position: absolute;
+
+        top: 45px;
+
+        white-space: nowrap;
+
+        color: var(--text);
+
+        font-size: 9px;
+      }
+
+      .online {
+        color: var(--green);
+
+        box-shadow: 0 0 18px rgba(66, 211, 146, 0.18);
+      }
+
+      .offline {
+        color: var(--red);
+
+        opacity: 0.4;
+      }
+
+      /* =========================
+           SIDE COLUMN
+        ========================= */
+
+      .side {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 15px;
+      }
+
+      /* =========================
+           SYSTEM OVERVIEW
+        ========================= */
+
+      .cards {
+        display: grid;
+
+        grid-template-columns: repeat(3, 1fr);
+
+        gap: 9px;
+
+        padding: 11px;
+      }
+
+      .card {
+        padding: 11px;
+
+        background: var(--panel2);
+
+        border: 1px solid var(--line);
+
+        border-radius: 11px;
+      }
+
+      .label {
+        color: var(--muted);
+
+        font-size: 10px;
+      }
+
+      .value {
+        margin-top: 5px;
+
+        font-size: 23px;
+
+        font-weight: 800;
+      }
+
+      .mini {
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 10px;
+      }
+
+      /* =========================
+           AI NODE
+        ========================= */
+
+      .ai {
+        padding: 12px;
+      }
+
+      .ai-box {
+        padding: 13px;
+
+        background: linear-gradient(135deg, #111d34, #0f1727);
+
+        border: 1px solid var(--line);
+
+        border-radius: 12px;
+      }
+
+      .ai-state {
+        margin-top: 4px;
+
+        font-size: 21px;
+
+        font-weight: 800;
+      }
+
+      .confidence {
+        height: 7px;
+
+        margin-top: 10px;
+
+        overflow: hidden;
+
+        background: #25334f;
+
+        border-radius: 10px;
+      }
+
+      .confidence > i {
+        display: block;
+
+        height: 100%;
+
+        width: 98%;
+
+        background: linear-gradient(90deg, var(--cyan), var(--blue));
+
+        transition: width 0.5s;
+      }
+      /* =========================
+            ROUTE VISUALIZATION
+          ========================= */
+
+      .route-layer {
+        position: absolute;
+        inset: 0;
+
+        width: 100%;
+        height: 100%;
+
+        pointer-events: none;
+
+        z-index: 2;
+      }
+
+      .route-path {
+        fill: none;
+
+        stroke: var(--cyan);
+
+        stroke-width: 1.2;
+
+        stroke-linecap: round;
+        stroke-linejoin: round;
+
+        stroke-dasharray: 5 3;
+
+        opacity: 0.9;
+
+        filter: drop-shadow(0 0 4px rgba(71, 215, 229, 0.45));
+
+        animation: routeFlow 1.2s linear infinite;
+      }
+
+      .route-path.reassigned {
+        stroke: #55e6a5;
+        opacity: 0.9;
+        stroke-width: 1.4;
+      }
+
+      .route-path.warning {
+        stroke: var(--yellow);
+
+        opacity: 0.8;
+      }
+
+      .route-path.blocked {
+        stroke: var(--red);
+
+        opacity: 0.35;
+
+        animation: none;
+
+        stroke-dasharray: 3 4;
+      }
+
+      .route-path.hidden {
+        opacity: 0;
+      }
+
+      @keyframes routeFlow {
+        to {
+          stroke-dashoffset: -16;
+        }
+      }
+
+      /* =========================
+           BOT FLEET
+        ========================= */
+
+      .botgrid {
+        display: grid;
+
+        grid-template-columns: repeat(3, 1fr);
+
+        gap: 8px;
+
+        padding: 10px;
+      }
+
+      .botcard {
+        padding: 9px;
+
+        background: var(--panel2);
+
+        border: 1px solid var(--line);
+
+        border-radius: 11px;
+      }
+
+      .bothead {
+        display: flex;
+
+        align-items: center;
+        justify-content: space-between;
+
+        font-size: 11px;
+      }
+
+      .dot {
+        display: inline-block;
+
+        width: 8px;
+        height: 8px;
+
+        margin-right: 5px;
+
+        border-radius: 50%;
+
+        background: currentColor;
+      }
+
+      .status {
+        padding: 3px 6px;
+
+        background: #172438;
+
+        border-radius: 999px;
+
+        font-size: 9px;
+      }
+
+      .rows {
+        display: grid;
+
+        gap: 5px;
+
+        margin-top: 9px;
+
+        font-size: 10px;
+      }
+
+      .row {
+        display: flex;
+
+        justify-content: space-between;
+
+        color: var(--muted);
+      }
+
+      .row b {
+        color: var(--text);
+
+        font-weight: 600;
+      }
+
+      .success {
+        color: var(--green);
+      }
+
+      .warn {
+        color: var(--yellow);
+      }
+
+      .error {
+        color: var(--red);
+      }
+
+      /* =========================
+           BOTTOM PANELS
+        ========================= */
+
+      .bottom {
+        display: grid;
+
+        grid-template-columns:
+          1.2fr
+          0.9fr
+          0.9fr;
+
+        gap: 15px;
+
+        margin-top: 15px;
+      }
+
+      .bottom-panel {
+        height: 235px;
+      }
+
+      .scroll-content {
+        height: calc(100% - 43px);
+
+        overflow-y: auto;
+
+        padding: 8px 13px;
+      }
+
+      /* =========================
+           TASK TABLE
+        ========================= */
+
+      .task {
+        display: grid;
+
+        grid-template-columns:
+          60px
+          1.25fr
+          80px
+          75px
+          70px;
+
+        gap: 6px;
+
+        align-items: center;
+
+        padding: 9px 4px;
+
+        border-bottom: 1px solid #202c44;
+
+        font-size: 10px;
+      }
+
+      .task.head {
+        color: var(--muted);
+
+        font-size: 9px;
+
+        text-transform: uppercase;
+      }
+
+      /* =========================
+           EVENT STREAM
+        ========================= */
+
+      .event {
+        padding: 8px 0;
+
+        border-bottom: 1px solid #202c44;
+      }
+
+      .eventline {
+        display: flex;
+
+        gap: 7px;
+
+        font-size: 10px;
+      }
+
+      .event time {
+        color: var(--muted);
+      }
+
+      .event .src {
+        color: var(--blue);
+
+        font-weight: 700;
+      }
+
+      .event p {
+        margin: 4px 0 0;
+
+        color: #cbd5e7;
+
+        font-size: 11px;
+      }
+
+      /* =========================
+           SECURITY
+        ========================= */
+
+      .security {
+        height: calc(100% - 43px);
+
+        overflow-y: auto;
+
+        padding: 8px 13px;
+      }
+
+      .device {
+        display: flex;
+
+        align-items: center;
+        justify-content: space-between;
+
+        padding: 9px 0;
+
+        border-bottom: 1px solid #202c44;
+
+        font-size: 11px;
+      }
+
+      /* =========================
+           FOOTER
+        ========================= */
+
+      .footer {
+        margin-top: 12px;
+
+        text-align: center;
+
+        color: var(--muted);
+
+        font-size: 10px;
+      }
+
+      /* =========================
+           RESPONSIVE
+        ========================= */
+
+      @media (max-width: 1150px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .warehouse {
+          height: 430px;
+        }
+
+        .bottom {
+          grid-template-columns: 1fr;
+        }
+
+        .bottom-panel {
+          height: 230px;
+        }
+      }
+
+      @media (max-width: 700px) {
+        .app {
+          width: 94vw;
+        }
+
+        .top {
+          align-items: flex-start;
+
+          gap: 12px;
+        }
+
+        .top .pill {
+          font-size: 10px;
+        }
+
+        .cards {
+          grid-template-columns: 1fr;
+        }
+
+        .botgrid {
+          grid-template-columns: 1fr;
+        }
+
+        .warehouse {
+          height: 360px;
+        }
+
+        .bottom {
+          grid-template-columns: 1fr;
+        }
+
+        .task {
+          grid-template-columns:
+            50px
+            1fr
+            65px;
+        }
+
+        .task span:nth-child(4),
+        .task span:nth-child(5) {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <!-- =========================
+         HEADER
+    ========================== -->
+
+      <div class="top">
+        <div class="title">
+          <h1>Warehouse Swarm Command Center</h1>
+
+          <p>
+            Edge AI · ESP-NOW Swarm · Dynamic Tasks · Digital Twin · Security
+          </p>
+        </div>
+
+        <div class="pill">● SYSTEM ONLINE</div>
+      </div>
+
+      <!-- =========================
+         FOUR SIMULATION CONTROLS
+    ========================== -->
+
+      <div class="actions">
+        <button onclick="resetSimulation()">Reset Simulation</button>
+
+        <button onclick="simulateObstacle()">Simulate Obstacle</button>
+
+        <button class="danger" onclick="disableBot()">Disable BOT-01</button>
+
+        <button class="primary" onclick="runCompleteSimulation()">
+          ▶ Run Complete Simulation
+        </button>
+      </div>
+
+      <!-- =========================
+         MAIN SECTION
+    ========================== -->
+
+      <div class="main-grid">
+        <!-- =====================
+             WAREHOUSE DIGITAL TWIN
+        ====================== -->
+
+        <section class="panel warehouse-panel">
+          <h2>Live Warehouse Digital Twin</h2>
+
+          <div class="map-wrap">
+            <div class="warehouse" id="warehouse">
+              <!-- ROUTE VISUALIZATION -->
+              <svg
+                class="route-layer"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                id="routeLayer"
+              >
+                <!-- BOT-02 normal route -->
+                <path
+                  id="bot2Route"
+                  class="route-path"
+                  d="M58,48 L50,39 L44,17"
+                />
+
+                <!-- BOT-02 alternate route -->
+                <path
+                  id="bot2ReplannedRoute"
+                  class="route-path warning hidden"
+                  d="M58,48 L64,55 L67,30 L44,17"
+                />
+
+                <!-- BOT-01 route -->
+                <path
+                  id="bot1Route"
+                  class="route-path"
+                  d="M24,49 L32,58 L44,88"
+                />
+
+                <!-- BOT-03 reassignment route -->
+                <path
+                  id="bot3Route"
+                  class="route-path reassigned hidden"
+                  d="M74,53 L68,61 L56,72 L44,88"
+                />
+              </svg>
+
+              <!-- SHELF A -->
+              <div class="shelf" style="left: 8%; top: 10%">
+                SHELF A
+                <br />
+                📦📦📦
+              </div>
+
+              <div class="shelf" style="left: 42%; top: 11%">
+                SHELF B
+                <br />
+                📦📦📦
+              </div>
+
+              <div class="shelf" style="left: 74%; top: 10%">
+                SHELF C
+                <br />
+                📦📦📦
+              </div>
+
+              <div class="shelf" style="left: 42%; top: 60%">
+                STORAGE
+                <br />
+                📦📦📦
+              </div>
+
+              <!-- DOCKS -->
+
+              <div class="dock" style="left: 8%; bottom: 8%">DOCK 1</div>
+
+              <div class="dock" style="left: 44%; bottom: 8%">DOCK 2</div>
+
+              <div class="dock" style="right: 8%; bottom: 8%">DOCK 3</div>
+
+              <!-- OBSTACLE -->
+
+              <div
+                class="obstacle"
+                id="obstacle"
+                style="display: none; left: 51%; top: 39%"
+              >
+                !
+              </div>
+
+              <!-- BOTS -->
+
+              <div class="bot online" id="BOT-01" style="left: 22%; top: 46%">
+                🤖
+
+                <small> BOT-01 </small>
+              </div>
+
+              <div class="bot online" id="BOT-02" style="left: 56%; top: 44%">
+                🤖
+
+                <small> BOT-02 </small>
+              </div>
+
+              <div class="bot online" id="BOT-03" style="left: 72%; top: 50%">
+                🤖
+
+                <small> BOT-03 </small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =====================
+             RIGHT SIDE
+        ====================== -->
+
+        <div class="side">
+          <!-- SYSTEM OVERVIEW -->
+
+          <section class="panel">
+            <h2>System Overview</h2>
+
+            <div class="cards">
+              <div class="card">
+                <div class="label">ACTIVE TASKS</div>
+
+                <div class="value" id="activeTasks">3</div>
+
+                <div class="mini">live assignments</div>
+              </div>
+
+              <div class="card">
+                <div class="label">COMPLETED</div>
+
+                <div class="value" id="completedTasks">17</div>
+
+                <div class="mini">today</div>
+              </div>
+
+              <div class="card">
+                <div class="label">OBSTACLES</div>
+
+                <div class="value" id="obstacles">31</div>
+
+                <div class="mini">detected</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- EDGE AI -->
+
+          <section class="panel">
+            <h2>Edge AI Node</h2>
+
+            <div class="ai">
+              <div class="ai-box">
+                <div class="label">SENSOR CLASSIFICATION</div>
+
+                <div class="ai-state" id="aiState">CLEAR</div>
+
+                <div class="mini" id="aiMeta">
+                  Ultrasonic 120 cm · IR false · action NONE
+                </div>
+
+                <div class="confidence">
+                  <i id="confidence"></i>
+                </div>
+
+                <div class="mini" id="confText">Confidence 98%</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- BOT FLEET -->
+
+          <section class="panel">
+            <h2>Bot Fleet</h2>
+
+            <div class="botgrid" id="bots"></div>
+          </section>
+        </div>
+      </div>
+
+      <!-- =========================
+         BOTTOM PANELS
+    ========================== -->
+
+      <div class="bottom">
+        <!-- TASK ALLOCATION -->
+
+        <section class="panel bottom-panel">
+          <h2>Task Allocation</h2>
+
+          <div class="scroll-content" id="tasks"></div>
+        </section>
+
+        <!-- LIVE EVENTS -->
+
+        <section class="panel bottom-panel">
+          <h2>Live Event Stream</h2>
+
+          <div class="scroll-content" id="events"></div>
+        </section>
+
+        <!-- SECURITY -->
+
+        <section class="panel bottom-panel">
+          <h2>Security</h2>
+
+          <div class="scroll-content" id="security"></div>
+        </section>
+      </div>
+
+      <!-- FOOTER -->
+
+      <div class="footer">
+        Demo control plane: Spring Boot REST API · simulated ESP32 telemetry ·
+        browser digital twin
+      </div>
+    </div>
+
+    <script>
+      /* =========================
+       API
+    ========================== */
+
+      const api = "/api";
+
+      /* =========================
+       GET CURRENT STATE
+    ========================== */
+
+      async function getState() {
+        try {
+          const response = await fetch(api + "/state");
+
+          const state = await response.json();
+
+          render(state);
+        } catch (error) {
+          console.error("Failed to fetch state:", error);
+        }
+      }
+
+      /* =========================
+       POST REQUEST
+    ========================== */
+
+      async function post(path) {
+        try {
+          const response = await fetch(api + path, {
+            method: "POST",
+          });
+
+          const state = await response.json();
+
+          render(state);
+
+          return state;
+        } catch (error) {
+          console.error("API request failed:", error);
+        }
+      }
+
+      /* =========================
+       RENDER DASHBOARD
+    ========================== */
+
+      function render(state) {
+        /* =====================
+           OVERVIEW
+        ====================== */
+
+        document.getElementById("activeTasks").textContent = state.activeTasks;
+
+        document.getElementById("completedTasks").textContent =
+          state.completedTasks;
+
+        document.getElementById("obstacles").textContent =
+          state.obstaclesDetected;
+
+        /* =====================
+           EDGE AI
+        ====================== */
+
+        document.getElementById("aiState").textContent = state.ai.state;
+
+        document.getElementById("aiMeta").textContent =
+          `Ultrasonic ${state.ai.distanceCm} cm · IR ${state.ai.irDetected} · action ${state.ai.action}`;
+
+        document.getElementById("confidence").style.width =
+          state.ai.confidence + "%";
+
+        document.getElementById("confText").textContent =
+          `Confidence ${state.ai.confidence}%`;
+
+        /* =====================
+           OBSTACLE
+        ====================== */
+
+        const obstacle = document.getElementById("obstacle");
+
+        obstacle.style.display = state.ai.state === "CLEAR" ? "none" : "flex";
+
+        /* =====================
+           BOT FLEET
+        ====================== */
+
+        const bots = document.getElementById("bots");
+
+        bots.innerHTML = state.bots
+          .map(
+            (bot) => `
+
+                    <div class="botcard">
+
+                        <div class="bothead">
+
+                            <b class="
+                                ${bot.status === "ONLINE" ? "success" : "error"}
+                            ">
+
+                                <span class="dot"></span>
+
+                                ${bot.id}
+
+                            </b>
+
+                            <span class="status">
+
+                                ${bot.status}
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="rows">
+
+                            <div class="row">
+
+                                <span>
+                                    Battery
+                                </span>
+
+                                <b>
+                                    ${bot.battery}%
+                                </b>
+
+                            </div>
+
+
+                            <div class="row">
+
+                                <span>
+                                    Task
+                                </span>
+
+                                <b>
+                                    ${bot.task || "—"}
+                                </b>
+
+                            </div>
+
+
+                            <div class="row">
+
+                                <span>
+                                    Connection
+                                </span>
+
+                                <b>
+                                    ${bot.connection}
+                                </b>
+
+                            </div>
+
+
+                            <div class="row">
+
+                                <span>
+                                    Last seen
+                                </span>
+
+                                <b>
+                                    ${bot.lastSeen}
+                                </b>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                `,
+          )
+          .join("");
+
+        /* =====================
+           MAP BOT STATUS
+        ====================== */
+
+        state.bots.forEach((bot) => {
+          const element = document.getElementById(bot.id);
+
+          if (!element) {
+            return;
+          }
+
+          element.classList.toggle("online", bot.status === "ONLINE");
+
+          element.classList.toggle("offline", bot.status !== "ONLINE");
+
+          element.style.opacity = bot.status === "ONLINE" ? "1" : ".4";
+        });
+
+        /* =====================
+           TASKS
+        ====================== */
+
+        const tasks = document.getElementById("tasks");
+
+        tasks.innerHTML =
+          `
+
+            <div class="task head">
+
+                <span>ID</span>
+
+                <span>FLOW</span>
+
+                <span>BOT</span>
+
+                <span>STATUS</span>
+
+                <span>ROUTE</span>
+
+            </div>
+
+        ` +
+          state.tasks
+            .map(
+              (task) => `
+
+                <div class="task">
+
+                    <b>
+                        ${task.id}
+                    </b>
+
+                    <span>
+                        ${task.source}
+                        →
+                        ${task.destination}
+                    </span>
+
+                    <span>
+                        ${
+                          task.assignedBot === "BOT-01" &&
+                          state.bots.find((bot) => bot.id === "BOT-01")
+                            ?.status !== "ONLINE"
+                            ? "BOT-03"
+                            : task.assignedBot
+                        }
+                    </span>
+
+                    <span class="
+                        ${task.status === "RUNNING" ? "success" : ""}
+                    ">
+                        ${task.status}
+                    </span>
+
+                    <span class="
+                        ${
+                          task.routeStatus === "BLOCKED"
+                            ? "error"
+                            : task.routeStatus === "REASSIGNED"
+                              ? "warn"
+                              : ""
+                        }
+                    ">
+                        ${task.routeStatus}
+                    </span>
+
+                </div>
+
+            `,
+            )
+            .join("");
+
+        /* =====================
+           EVENT STREAM
+        ====================== */
+
+        document.getElementById("events").innerHTML = state.events
+          .map(
+            (event) => `
+
+                    <div class="event">
+
+                        <div class="eventline">
+
+                            <time>
+                                ${event.time}
+                            </time>
+
+                            <span class="src">
+                                ${event.source}
+                            </span>
+
+                            <span class="
+                                ${
+                                  event.severity === "ERROR"
+                                    ? "error"
+                                    : event.severity === "WARNING"
+                                      ? "warn"
+                                      : "success"
+                                }
+                            ">
+                                ${event.type}
+                            </span>
+
+                        </div>
+
+                        <p>
+                            ${event.message}
+                        </p>
+
+                    </div>
+
+                `,
+          )
+          .join("");
+
+        /* =====================
+           SECURITY
+        ====================== */
+
+        document.getElementById("security").innerHTML = state.security
+          .map(
+            (device) => `
+
+                    <div class="device">
+
+                        <span>
+
+                            <b>
+                                ${device.id}
+                            </b>
+
+                            <br>
+
+                            <span class="label">
+                                ${device.authMethod}
+                            </span>
+
+                        </span>
+
+
+                        <span class="
+                            ${
+                              device.status === "AUTHENTICATED"
+                                ? "success"
+                                : "error"
+                            }
+                        ">
+
+                            ${device.status}
+
+                            <br>
+
+                            <span class="label">
+                                ${device.session}
+                            </span>
+
+                        </span>
+
+                    </div>
+
+                `,
+          )
+          .join("");
+
+        updateRoutes(state);
+      }
+      function updateRoutes(state) {
+        const normalRoute = document.getElementById("bot2Route");
+        const replannedRoute = document.getElementById("bot2ReplannedRoute");
+        const bot1Route = document.getElementById("bot1Route");
+        const bot3Route = document.getElementById("bot3Route");
+
+        // Obstacle detected → show alternate route
+        if (state.ai.state !== "CLEAR") {
+          normalRoute.classList.add("blocked");
+          replannedRoute.classList.remove("hidden");
+        } else {
+          normalRoute.classList.remove("blocked");
+          replannedRoute.classList.add("hidden");
+        }
+
+        const bot1 = state.bots.find((bot) => bot.id === "BOT-01");
+
+        // BOT-01 failed → hide its route and show BOT-03 takeover route
+        if (bot1 && bot1.status !== "ONLINE") {
+          bot1Route.classList.add("hidden");
+          bot3Route.classList.remove("hidden");
+        } else {
+          bot1Route.classList.remove("hidden");
+          bot3Route.classList.add("hidden");
+        }
+      }
+
+      /* =========================
+       1. RESET
+    ========================== */
+
+      function resetSimulation() {
+        post("/reset");
+      }
+
+      /* =========================
+       2. SIMULATE OBSTACLE
+    ========================== */
+
+      function simulateObstacle() {
+        post("/simulate/obstacle");
+      }
+
+      /* =========================
+       3. DISABLE BOT-01
+    ========================== */
+
+      function disableBot() {
+        post("/simulate/failure/BOT-01");
+      }
+
+      /* =========================
+       4. COMPLETE SIMULATION
+    ========================== */
+
+      async function runCompleteSimulation() {
+        const button = document.querySelector(".primary");
+
+        button.disabled = true;
+
+        button.textContent = "Running Complete Simulation...";
+
+        /* Step 1
+           Reset system
+        */
+
+        await post("/reset");
+
+        await wait(1500);
+
+        /* Step 2
+           Edge AI detects obstacle
+        */
+
+        await post("/simulate/obstacle");
+
+        await wait(3000);
+
+        /* Step 3
+           BOT-01 fails
+        */
+
+        await post("/simulate/failure/BOT-01");
+
+        await wait(2500);
+
+        /* Finish */
+
+        button.disabled = false;
+
+        button.textContent = "▶ Run Complete Simulation";
+      }
+
+      /* =========================
+       DELAY HELPER
+    ========================== */
+
+      function wait(milliseconds) {
+        return new Promise((resolve) => setTimeout(resolve, milliseconds));
+      }
+
+      /* =========================
+       INITIAL STATE
+    ========================== */
+
+      getState();
+
+      /* =========================
+       AUTO REFRESH
+    ========================== */
+
+      setInterval(getState, 1000);
+    </script>
+  </body>
+</html>
